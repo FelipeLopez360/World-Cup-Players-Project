@@ -1,0 +1,4 @@
+"0","frecuencia_seleccion <- datos_limpios %>%"
+"0","  count(team_name, sort = TRUE)"
+"0",""
+"0","kable(head(frecuencia_seleccion, 15), caption = ""Frecuencia de apariciones por selección (Top 15)"")"

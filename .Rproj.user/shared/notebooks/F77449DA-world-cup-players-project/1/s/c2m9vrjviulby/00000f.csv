@@ -1,0 +1,7 @@
+"0","ggplot(datos_limpios, aes(y = shirt_number)) +"
+"0","  geom_boxplot(fill = ""orange"") +"
+"0","  labs("
+"0","    title = ""Boxplot del número de camiseta"","
+"0","    y = ""Número de camiseta"""
+"0","  ) +"
+"0","  theme_minimal()"

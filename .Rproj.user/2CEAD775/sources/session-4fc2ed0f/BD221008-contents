@@ -1,0 +1,298 @@
+---
+title: "Análisis Exploratorio de Datos de Jugadores en Copas del Mundo"
+author: "Felipe Andrés López"
+date: "`r Sys.Date()`" 
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Introducción
+
+## Planteamiento del problema
+
+En este trabajo se realiza un análisis exploratorio de datos con una base de datos de apariciones de jugadores en partidos de la Copa Mundial de la FIFA. La idea es usar R y RStudio para entender mejor cómo está organizada la información y observar algunas características de los jugadores, como el número de camiseta, la posición en la que juegan y la selección a la que pertenecen.
+
+Dado que la guía original hace referencia a códigos de municipios o departamentos, en este caso ese criterio fue adaptado al contexto del dataset, utilizando la variable `team_code`, que representa el código de la selección nacional.
+
+## Objetivo general
+
+Realizar un análisis exploratorio del conjunto de datos `player_appearances.csv` por medio de limpieza, estadísticas descriptivas y gráficos elaborados en R y R Markdown.
+
+## Objetivos específicos
+
+1. Identificar variables cuantitativas y cualitativas que sean útiles para el análisis.
+2. Revisar si la base de datos presenta datos faltantes o registros duplicados.
+3. Calcular algunas medidas descriptivas para la variable cuantitativa seleccionada.
+4. Representar los datos por medio de gráficos para observar mejor su comportamiento.
+5. Identificar las selecciones con mayor número de apariciones dentro de la base de datos.
+
+# Descripción del conjunto de datos
+
+El conjunto de datos utilizado contiene información sobre apariciones de jugadores en partidos de la Copa Mundial. Entre las variables disponibles se encuentran:
+
+- `shirt_number`: número de camiseta del jugador.
+- `position_name`: posición de juego del jugador.
+- `team_code`: código de la selección nacional.
+- `team_name`: nombre de la selección.
+- `tournament_name`: nombre del torneo.
+- `stage_name`: fase del torneo.
+
+En este análisis se seleccionaron las siguientes variables:
+
+- **Variable cuantitativa:** `shirt_number`
+- **Variable cualitativa:** `position_name`
+- **Código equivalente al solicitado en la guía:** `team_code`
+
+# Carga de librerías y datos
+
+```{r}
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+```
+
+En esta parte se cargan las librerías que se van a usar durante el trabajo. Con ellas se puede leer el archivo, organizar los datos y hacer los gráficos del análisis.
+
+```{r}
+datos <- read_csv("../Datos/player_appearances.csv")
+glimpse(datos)
+```
+
+Con `glimpse()` se puede ver rápidamente cómo está organizada la base. Esto sirve para revisar cuántas variables hay, qué tipo de datos contiene cada una y si las variables elegidas para el trabajo aparecen de forma correcta.
+
+# Limpieza de datos
+
+## 1. Identificación de datos faltantes
+
+```{r}
+faltantes_por_columna <- colSums(is.na(datos))
+faltantes_por_columna
+```
+
+En esta parte se revisa si alguna variable tiene datos faltantes. Esto es importante porque los valores vacíos pueden afectar los resultados del análisis.
+
+```{r}
+faltantes_totales <- sum(is.na(datos))
+faltantes_totales
+```
+
+Al calcular el total de valores faltantes se puede ver de manera general si la base tiene problemas de información incompleta. En este caso el resultado fue **`r faltantes_totales`**, por lo que `r if (faltantes_totales == 0) "no hizo falta rellenar ni eliminar registros por datos ausentes." else "sí fue necesario tener en cuenta valores ausentes para la limpieza."`
+
+### Tratamiento de datos faltantes
+
+Para este análisis, los registros con valores faltantes en las variables seleccionadas (`shirt_number`, `position_name`, `team_code`) serán excluidos.
+
+```{r}
+datos_limpios <- datos %>%
+  filter(!is.na(shirt_number),
+         !is.na(position_name),
+         !is.na(team_code))
+```
+
+Aunque no se encontraron valores faltantes, igual se dejó este paso para mostrar con qué criterio se trabajó la limpieza de las variables principales.
+
+## 2. Identificación y eliminación de duplicados
+
+```{r}
+duplicados <- sum(duplicated(datos_limpios))
+duplicados
+```
+
+Aquí se revisa si existen filas repetidas en la base. Esto es importante porque los duplicados pueden alterar los conteos y hacer que algunos resultados parezcan mayores de lo real.
+
+```{r}
+datos_limpios <- datos_limpios %>%
+  distinct()
+```
+
+Con `distinct()` se eliminan los registros repetidos para trabajar con una base más limpia y evitar que una misma observación cuente más de una vez.
+
+```{r}
+duplicados_final <- sum(duplicated(datos_limpios))
+duplicados_final
+```
+
+Esta verificación final sirve para confirmar si todavía quedan duplicados después de la limpieza. Si el resultado es 0, se puede decir que en este punto la base quedó depurada.
+
+# Análisis exploratorio de datos (EDA)
+
+## Variable cuantitativa: `shirt_number`
+
+### Medidas descriptivas
+
+```{r}
+media <- mean(datos_limpios$shirt_number)
+mediana <- median(datos_limpios$shirt_number)
+minimo <- min(datos_limpios$shirt_number)
+maximo <- max(datos_limpios$shirt_number)
+desviacion <- sd(datos_limpios$shirt_number)
+
+moda <- as.numeric(names(sort(table(datos_limpios$shirt_number), decreasing = TRUE)[1]))
+
+estadisticas <- data.frame(
+  Medida = c("Media", "Mediana", "Moda", "Mínimo", "Máximo", "Desviación estándar"),
+  Valor = c(media, mediana, moda, minimo, maximo, desviacion)
+)
+
+kable(estadisticas, caption = "Medidas descriptivas de shirt_number")
+```
+
+Estas medidas permiten resumir el comportamiento de la variable `shirt_number`. En los resultados se observa una media de **`r round(media, 2)`**, una mediana de **`r mediana`** y una moda de **`r moda`**. Esto da una idea del valor central de los dorsales y de cuál número aparece con mayor frecuencia en la base.
+
+### Histograma
+
+```{r}
+ggplot(datos_limpios, aes(x = shirt_number)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
+  labs(
+    title = "Distribución del número de camiseta",
+    x = "Número de camiseta",
+    y = "Frecuencia"
+  ) +
+  theme_minimal()
+```
+
+El histograma permite ver cómo se distribuyen los números de camiseta en la base. Con este gráfico se puede notar cuáles dorsales aparecen con más frecuencia y en qué valores se concentra la mayor parte de los registros.
+
+### Boxplot
+
+```{r}
+ggplot(datos_limpios, aes(y = shirt_number)) +
+  geom_boxplot(fill = "orange") +
+  labs(
+    title = "Boxplot del número de camiseta",
+    y = "Número de camiseta"
+  ) +
+  theme_minimal()
+```
+
+El boxplot ayuda a complementar el análisis porque muestra de forma más clara la mediana, la dispersión y posibles valores atípicos. Así se puede revisar si algunos dorsales se alejan del comportamiento general de la variable.
+
+## Variable cualitativa: `position_name`
+
+### Tabla de frecuencias
+
+```{r}
+frecuencia_posicion <- datos_limpios %>%
+  count(position_name, sort = TRUE)
+
+kable(frecuencia_posicion, caption = "Frecuencia de posiciones de juego")
+```
+
+La tabla de frecuencias permite ver cuántas veces aparece cada posición de juego. En este caso, la posición con mayor frecuencia es **`r frecuencia_posicion$position_name[1]`** con **`r frecuencia_posicion$n[1]`** apariciones, lo que muestra cuál es el rol con más presencia dentro de la base analizada.
+
+### Gráfico de barras
+
+```{r}
+ggplot(frecuencia_posicion, aes(x = reorder(position_name, n), y = n)) +
+  geom_col(fill = "darkgreen") +
+  coord_flip() +
+  labs(
+    title = "Cantidad de apariciones por posición",
+    x = "Posición",
+    y = "Frecuencia"
+  ) +
+  theme_minimal()
+```
+
+El gráfico de barras permite comparar de forma más visual la frecuencia de cada posición. Así es más fácil notar cuáles posiciones aparecen más y cuáles tienen menor cantidad de registros.
+
+## Selección a la que pertenece cada jugador
+
+### Tabla de frecuencias por selección
+
+```{r}
+frecuencia_seleccion <- datos_limpios %>%
+  count(team_name, sort = TRUE)
+
+kable(head(frecuencia_seleccion, 15), caption = "Frecuencia de apariciones por selección (Top 15)")
+```
+
+En esta tabla se observa qué selecciones aparecen más veces en la base de datos. La selección con mayor frecuencia es **`r frecuencia_seleccion$team_name[1]`** con **`r frecuencia_seleccion$n[1]`** apariciones. Como la base está formada por registros de participación en partidos, una frecuencia más alta indica mayor presencia dentro del conjunto de datos analizado.
+
+### Gráfico de barras por selección
+
+```{r}
+top15_selecciones <- frecuencia_seleccion %>%
+  slice_head(n = 15)
+
+ggplot(top15_selecciones, aes(x = reorder(team_name, n), y = n)) +
+  geom_col(fill = "brown") +
+  coord_flip() +
+  labs(
+    title = "Selecciones con mayor número de apariciones",
+    x = "Selección",
+    y = "Frecuencia"
+  ) +
+  theme_minimal()
+```
+
+Este gráfico permite ver de manera más clara cuáles selecciones concentran una mayor cantidad de apariciones. Visualmente resulta más fácil comparar los equipos y notar cuáles tienen más presencia dentro de la base.
+
+## Jugadores que participaron en más de un mundial
+
+Además de revisar la selección de cada jugador, también resulta interesante mirar qué jugadores aparecen en más de una edición del Mundial. Para hacerlo, se usa `player_id` como identificador principal y `family_name` junto con `given_name` para mostrar el nombre del jugador.
+
+### Tabla de jugadores con más de un mundial
+
+```{r}
+jugadores_varios_mundiales <- datos_limpios %>%
+  group_by(player_id, family_name, given_name, team_name) %>%
+  summarise(cantidad_mundiales = n_distinct(tournament_id), .groups = "drop") %>%
+  filter(cantidad_mundiales > 1) %>%
+  arrange(desc(cantidad_mundiales), team_name, family_name)
+
+kable(head(jugadores_varios_mundiales, 20), caption = "Jugadores con participación en más de un mundial")
+```
+
+En esta tabla se pueden ver algunos jugadores que participaron en más de una Copa del Mundo. En total se identificaron **`r nrow(jugadores_varios_mundiales)`** jugadores con presencia en más de un mundial, lo que ayuda a reconocer casos de continuidad deportiva dentro de distintas selecciones.
+
+### Boxplot de mundiales por jugador según selección
+
+```{r}
+mundiales_por_jugador <- datos_limpios %>%
+  group_by(player_id, family_name, given_name, team_name) %>%
+  summarise(cantidad_mundiales = n_distinct(tournament_id), .groups = "drop")
+
+top10_selecciones_jugadores <- mundiales_por_jugador %>%
+  count(team_name, sort = TRUE) %>%
+  slice_head(n = 10) %>%
+  pull(team_name)
+
+mundiales_por_jugador %>%
+  filter(team_name %in% top10_selecciones_jugadores) %>%
+  ggplot(aes(x = reorder(team_name, cantidad_mundiales, FUN = median), y = cantidad_mundiales)) +
+  geom_boxplot(fill = "skyblue") +
+  coord_flip() +
+  labs(
+    title = "Cantidad de mundiales por jugador según selección",
+    x = "Selección",
+    y = "Cantidad de mundiales"
+  ) +
+  theme_minimal()
+```
+
+Este boxplot no muestra los nombres de los jugadores, pero sí sirve para comparar cómo se distribuye la cantidad de mundiales jugados dentro de cada selección. Así se puede ver si algunas selecciones tienen más jugadores que repiten participación en diferentes ediciones.
+
+# Resultados
+
+Con el análisis realizado se pudo ver que la base de datos está completa en términos de valores faltantes, ya que el total encontrado fue **`r faltantes_totales`**. También se observó que la variable `shirt_number` tiene una media de **`r round(media, 2)`** y que el dorsal más frecuente fue el **`r moda`**. En cuanto a la variable cualitativa, la posición que más aparece es **`r frecuencia_posicion$position_name[1]`** con **`r frecuencia_posicion$n[1]`** registros. Además, la selección con mayor presencia en la base es **`r frecuencia_seleccion$team_name[1]`** con **`r frecuencia_seleccion$n[1]`** apariciones. Finalmente, se identificaron **`r nrow(jugadores_varios_mundiales)`** jugadores que participaron en más de una edición del Mundial.
+
+# Conclusiones
+
+1. Este trabajo permitió usar R y RStudio para hacer un análisis exploratorio básico sobre jugadores de la Copa Mundial.
+2. La limpieza mostró que la base no presenta valores faltantes y que, después de revisar duplicados, se pudo trabajar con los datos de forma más confiable.
+3. La variable `shirt_number` fue útil para aplicar medidas descriptivas y entender mejor cómo se distribuyen los números de camiseta.
+4. La variable `position_name` permitió identificar qué posiciones tienen más presencia dentro del dataset.
+5. El análisis por `team_name` ayudó a ver qué selecciones aparecen con mayor frecuencia en la base trabajada.
+6. El conteo de jugadores con participación en más de un Mundial complementó el análisis, ya que permitió identificar casos de continuidad en distintas selecciones.
+
+# Referencias
+
+- Dataset: `player_appearances.csv`
+- URL: https://www.kaggle.com/datasets/joshfjelstul/world-cup-database?utm_source=chatgpt.com&select=player_appearances.csv
+- Software utilizado: R y R Markdown

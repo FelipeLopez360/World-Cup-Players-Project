@@ -1,0 +1,8 @@
+"0","ggplot(datos_limpios, aes(x = shirt_number)) +"
+"0","  geom_histogram(binwidth = 1, fill = ""steelblue"", color = ""white"") +"
+"0","  labs("
+"0","    title = ""Distribución del número de camiseta"","
+"0","    x = ""Número de camiseta"","
+"0","    y = ""Frecuencia"""
+"0","  ) +"
+"0","  theme_minimal()"

@@ -1,0 +1,4 @@
+"0","datos_limpios <- datos %>%"
+"0","  filter(!is.na(shirt_number),"
+"0","         !is.na(position_name),"
+"0","         !is.na(team_code))"

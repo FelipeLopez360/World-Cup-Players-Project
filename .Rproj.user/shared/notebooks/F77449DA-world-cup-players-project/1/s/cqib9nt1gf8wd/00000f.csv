@@ -1,0 +1,7 @@
+"0","jugadores_varios_mundiales <- datos_limpios %>%"
+"0","  group_by(player_id, family_name, given_name, team_name) %>%"
+"0","  summarise(cantidad_mundiales = n_distinct(tournament_id), .groups = ""drop"") %>%"
+"0","  filter(cantidad_mundiales > 1) %>%"
+"0","  arrange(desc(cantidad_mundiales), team_name, family_name)"
+"0",""
+"0","kable(head(jugadores_varios_mundiales, 20), caption = ""Jugadores con participación en más de un mundial"")"

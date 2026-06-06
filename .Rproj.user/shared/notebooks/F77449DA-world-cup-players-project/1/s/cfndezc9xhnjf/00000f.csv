@@ -1,0 +1,4 @@
+"0","frecuencia_posicion <- datos_limpios %>%"
+"0","  count(position_name, sort = TRUE)"
+"0",""
+"0","kable(frecuencia_posicion, caption = ""Frecuencia de posiciones de juego"")"

@@ -1,0 +1,136 @@
+---
+title: "Análisis Exploratorio de Datos de Jugadores en Copas del Mundo"
+author: "Nombre 1, Nombre 2, Nombre 3"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+Introducción
+Planteamiento del problema
+El análisis exploratorio de datos permite identificar patrones, distribuciones y posibles inconsistencias dentro de un conjunto de datos. En este proyecto se trabaja con un dataset de apariciones de jugadores en partidos de la Copa Mundial de la FIFA, con el propósito de explorar características relevantes como el número de camiseta, la posición de juego y la selección a la que pertenece cada jugador.
+Dado que la guía original hace referencia a códigos de municipios o departamentos, en este caso ese criterio fue adaptado al contexto del dataset, utilizando la variable team_code, que representa el código de la selección nacional.
+Objetivo general
+Realizar un análisis exploratorio de datos del conjunto player_appearances.csv mediante técnicas de limpieza, análisis descriptivo y visualización, utilizando R y R Markdown.
+Objetivos específicos
+1. Identificar y seleccionar variables cuantitativas y cualitativas relevantes dentro del dataset.
+2. Detectar y tratar datos faltantes y registros duplicados.
+3. Calcular medidas descriptivas para una variable cuantitativa seleccionada.
+4. Visualizar gráficamente las variables seleccionadas para identificar patrones.
+5. Presentar el Top 10 de selecciones según una métrica relevante del conjunto de datos.
+Descripción del conjunto de datos
+El conjunto de datos utilizado contiene información sobre apariciones de jugadores en partidos de la Copa Mundial. Entre las variables disponibles se encuentran:
+- shirt_number: número de camiseta del jugador.
+- position_name: posición de juego del jugador.
+- team_code: código de la selección nacional.
+- team_name: nombre de la selección.
+- tournament_name: nombre del torneo.
+- stage_name: fase del torneo.
+En este análisis se seleccionaron las siguientes variables:
+- Variable cuantitativa: shirt_number
+- Variable cualitativa: position_name
+- Código equivalente al solicitado en la guía: team_code
+Carga de librerías y datos
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+datos <- read_csv("player_appearances.csv")
+glimpse(datos)
+Limpieza de datos
+1. Identificación de datos faltantes
+faltantes_por_columna <- colSums(is.na(datos))
+faltantes_por_columna
+faltantes_totales <- sum(is.na(datos))
+faltantes_totales
+Tratamiento de datos faltantes
+Para este análisis, los registros con valores faltantes en las variables seleccionadas (shirt_number, position_name, team_code) serán excluidos.
+datos_limpios <- datos %>%
+  filter(!is.na(shirt_number),
+         !is.na(position_name),
+         !is.na(team_code))
+2. Identificación y eliminación de duplicados
+duplicados <- sum(duplicated(datos_limpios))
+duplicados
+datos_limpios <- datos_limpios %>%
+  distinct()
+duplicados_final <- sum(duplicated(datos_limpios))
+duplicados_final
+Análisis exploratorio de datos (EDA)
+Variable cuantitativa: shirt_number
+Medidas descriptivas
+media <- mean(datos_limpios$shirt_number)
+mediana <- median(datos_limpios$shirt_number)
+minimo <- min(datos_limpios$shirt_number)
+maximo <- max(datos_limpios$shirt_number)
+desviacion <- sd(datos_limpios$shirt_number)
+
+moda <- as.numeric(names(sort(table(datos_limpios$shirt_number), decreasing = TRUE)[1]))
+
+estadisticas <- data.frame(
+  Medida = c("Media", "Mediana", "Moda", "Mínimo", "Máximo", "Desviación estándar"),
+  Valor = c(media, mediana, moda, minimo, maximo, desviacion)
+)
+
+kable(estadisticas, caption = "Medidas descriptivas de shirt_number")
+Histograma
+ggplot(datos_limpios, aes(x = shirt_number)) +
+  geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
+  labs(
+    title = "Distribución del número de camiseta",
+    x = "Número de camiseta",
+    y = "Frecuencia"
+  ) +
+  theme_minimal()
+Boxplot
+ggplot(datos_limpios, aes(y = shirt_number)) +
+  geom_boxplot(fill = "orange") +
+  labs(
+    title = "Boxplot del número de camiseta",
+    y = "Número de camiseta"
+  ) +
+  theme_minimal()
+Variable cualitativa: position_name
+Tabla de frecuencias
+frecuencia_posicion <- datos_limpios %>%
+  count(position_name, sort = TRUE)
+
+kable(frecuencia_posicion, caption = "Frecuencia de posiciones de juego")
+Gráfico de barras
+ggplot(frecuencia_posicion, aes(x = reorder(position_name, n), y = n)) +
+  geom_col(fill = "darkgreen") +
+  coord_flip() +
+  labs(
+    title = "Cantidad de apariciones por posición",
+    x = "Posición",
+    y = "Frecuencia"
+  ) +
+  theme_minimal()
+Top 10 selecciones según cantidad de apariciones
+En reemplazo del criterio de municipios o departamentos, se presenta el Top 10 de selecciones nacionales según la cantidad de apariciones registradas en el dataset.
+top10_selecciones <- datos_limpios %>%
+  count(team_code, team_name, sort = TRUE) %>%
+  slice_head(n = 10)
+
+kable(top10_selecciones, caption = "Top 10 selecciones por cantidad de apariciones")
+ggplot(top10_selecciones, aes(x = reorder(team_name, n), y = n)) +
+  geom_col(fill = "purple") +
+  coord_flip() +
+  labs(
+    title = "Top 10 selecciones por cantidad de apariciones",
+    x = "Selección",
+    y = "Cantidad de apariciones"
+  ) +
+  theme_minimal()
+Resultados
+A partir del análisis realizado, se observó la distribución de los números de camiseta utilizados por los jugadores, así como la frecuencia de aparición de las distintas posiciones de juego. Además, se identificaron las selecciones con mayor cantidad de registros en el dataset, lo cual permite reconocer qué equipos tienen mayor presencia histórica dentro de la base analizada.
+Conclusiones
+1. El dataset permite realizar un análisis exploratorio claro sobre variables deportivas relacionadas con jugadores de la Copa Mundial.
+2. La variable shirt_number permitió calcular estadísticas descriptivas y observar su distribución mediante gráficos.
+3. La variable position_name facilitó el análisis de frecuencias por rol de juego.
+4. La variable team_code fue utilizada como adaptación metodológica del requisito de código territorial solicitado en la guía.
+5. El análisis del Top 10 de selecciones permitió identificar los equipos con mayor número de apariciones registradas en el conjunto de datos.
+Referencias
+- Dataset: player_appearances.csv
+- Software utilizado: R y R Markdown

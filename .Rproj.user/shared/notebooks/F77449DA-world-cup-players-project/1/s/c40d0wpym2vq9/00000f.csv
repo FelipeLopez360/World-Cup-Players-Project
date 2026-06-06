@@ -1,0 +1,5 @@
+"0","top10_selecciones <- datos_limpios %>%"
+"0","  count(team_code, team_name, sort = TRUE) %>%"
+"0","  slice_head(n = 10)"
+"0",""
+"0","kable(top10_selecciones, caption = ""Top 10 selecciones por cantidad de apariciones"")"
